@@ -17,13 +17,23 @@ FSTAR_ULIB = $(FSTAR_HOME)/ulib
 LOWSTAR_LIB = $(realpath lib)
 LOWSTAR_LEGACY = $(realpath lib/legacy)
 
+# --already_cached: treat Prims and FStar modules as cached from the
+# FStar submodule's ulib.checked, but NOT LowStar modules — those are
+# verified from our lib/ sources.
+# NOTE: The FStar.HyperStack/Modifies/etc. modules in lib/ are currently
+# also present in the FStar submodule (master branch) and use its cache.
+# Once the fstar2 cleanup merges to master, update --already_cached to
+# also exclude those FStar.* modules with e.g. -FStar.HyperStack.
+ALREADY_CACHED = Prims FStar -LowStar
+
 # Common F* flags
 FSTAR_FLAGS = \
   --cache_dir $(CACHE_DIR) \
   --odir $(OUTPUT_DIR) \
-  --already_cached 'Prims FStar' \
+  --already_cached '$(ALREADY_CACHED)' \
   --include $(LOWSTAR_LIB) \
   --include $(LOWSTAR_LEGACY) \
+  $(foreach d,$(EXAMPLE_DIRS),--include $(d)) \
   --warn_error -321
 
 CACHE_DIR  = _cache
@@ -57,19 +67,13 @@ LIB_FILES = $(wildcard lib/*.fst lib/*.fsti lib/legacy/*.fst lib/legacy/*.fsti)
 
 # Collect all example .fst/.fsti files
 EXAMPLE_DIRS = \
-  examples/crypto \
   examples/data_structures \
   examples/demos/low-star \
-  examples/demos/fstar_and_lowstar \
   examples/doublylinkedlist \
   examples/generic \
-  examples/kv_parsing \
-  examples/layeredeffects \
-  examples/low-mitls-experiments \
   examples/misc \
   examples/oplss2021 \
   examples/preorders \
-  examples/regional \
   examples/sample_project \
   examples/tests
 
@@ -88,7 +92,7 @@ depend: .depend
 -include .depend
 
 # -------------------------------------------------------------------------
-# Verification
+# Verification — use ALL_CHECKED_FILES from .depend
 # -------------------------------------------------------------------------
 
 $(CACHE_DIR)/%.checked: | .depend
@@ -96,9 +100,9 @@ $(CACHE_DIR)/%.checked: | .depend
 	$(FSTAR) $< --cache_checked_modules
 	@touch -c $@
 
-lib: $(addprefix $(CACHE_DIR)/,$(addsuffix .checked,$(notdir $(LIB_FILES))))
+lib: $(ALL_CHECKED_FILES)
 
-examples: lib $(addprefix $(CACHE_DIR)/,$(addsuffix .checked,$(notdir $(EXAMPLE_FILES))))
+examples: $(ALL_CHECKED_FILES)
 
 # -------------------------------------------------------------------------
 # Clean

@@ -24,14 +24,11 @@ LowStar/
 │       ├── FStar_Buffer.ml
 │       └── FStar_HyperStack_ST.ml
 ├── examples/               # Example programs using Low*
-│   ├── crypto/             # Game-based cryptography examples (EtM, HyE, OPLSS)
 │   ├── data_structures/    # LowStar.Lens — buffer lens utilities
 │   ├── demos/              # Low* tutorial demos
-│   │   ├── low-star/       # Main Low* demo (Demo.fst)
-│   │   └── fstar_and_lowstar/
+│   │   └── low-star/       # Main Low* demo (Demo.fst)
 │   ├── doublylinkedlist/   # Verified doubly-linked list
 │   ├── generic/            # Interop example
-│   ├── kv_parsing/         # Key-value parser with Low* buffers
 │   ├── layeredeffects/     # LowParseWriters and related
 │   ├── low-mitls-experiments/ # miTLS Low* experiments
 │   ├── misc/               # Miscellaneous (WithLocal)
@@ -83,8 +80,6 @@ The following modules were moved from the F\* repository's `ulib/` directory:
 |---|---|
 | `demos/low-star/` | Introductory Low\* demos |
 | `doublylinkedlist/` | Verified doubly-linked list implementation |
-| `kv_parsing/` | Key-value parser using Low\* buffers |
-| `crypto/` | Game-based crypto proofs (EtM, HyE, OPLSS) using HyperStack |
 | `data_structures/` | LowStar.Lens buffer lens utilities |
 | `low-mitls-experiments/` | miTLS protocol experiments |
 | `regional/` | Regional vector example |
