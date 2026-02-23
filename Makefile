@@ -4,8 +4,8 @@
 # LowStar.Buffer, Modifies, etc.) and example programs built on top of them.
 #
 # Prerequisites:
-#   - F* (via the FStar/ submodule)
 #   - Z3 (in PATH)
+#   - OCaml toolchain (for building F* if needed)
 
 FSTAR_HOME ?= $(realpath FStar)
 FSTAR_EXE  ?= $(FSTAR_HOME)/out/bin/fstar.exe
@@ -31,9 +31,22 @@ OUTPUT_DIR = _output
 
 FSTAR = $(FSTAR_EXE) $(FSTAR_FLAGS) $(OTHERFLAGS)
 
-.PHONY: all lib examples clean depend
+.PHONY: all lib examples clean depend fstar
 
 all: lib examples
+
+# -------------------------------------------------------------------------
+# Build F* if needed
+# -------------------------------------------------------------------------
+
+fstar: $(FSTAR_EXE)
+
+$(FSTAR_EXE):
+	@if [ ! -f $(FSTAR_EXE) ]; then \
+	  echo "*** F* not found at $(FSTAR_EXE), building it..." ; \
+	  git submodule update --init --recursive ; \
+	  $(MAKE) -C $(FSTAR_HOME) -j ; \
+	fi
 
 # -------------------------------------------------------------------------
 # Dependency analysis
@@ -54,8 +67,6 @@ EXAMPLE_DIRS = \
   examples/layeredeffects \
   examples/low-mitls-experiments \
   examples/misc \
-  examples/old \
-  examples/old/tls-record-layer \
   examples/oplss2021 \
   examples/preorders \
   examples/regional \
@@ -67,7 +78,7 @@ EXAMPLE_FILES = $(foreach d,$(EXAMPLE_DIRS),$(wildcard $(d)/*.fst $(d)/*.fsti))
 ALL_FILES = $(LIB_FILES) $(EXAMPLE_FILES)
 
 # Generate .depend using F*'s --dep full
-.depend: $(ALL_FILES)
+.depend: $(FSTAR_EXE) $(ALL_FILES)
 	@mkdir -p $(CACHE_DIR) $(OUTPUT_DIR)
 	$(FSTAR) --dep full $(ALL_FILES) \
 	  --output_deps_to $@

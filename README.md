@@ -35,7 +35,6 @@ LowStar/
 │   ├── layeredeffects/     # LowParseWriters and related
 │   ├── low-mitls-experiments/ # miTLS Low* experiments
 │   ├── misc/               # Miscellaneous (WithLocal)
-│   ├── old/                # Legacy examples and tls-record-layer
 │   ├── oplss2021/          # OPLSS 2021 MemCpy tutorial
 │   ├── preorders/          # Closure example
 │   ├── regional/           # Regional vector example
@@ -90,7 +89,6 @@ The following modules were moved from the F\* repository's `ulib/` directory:
 | `low-mitls-experiments/` | miTLS protocol experiments |
 | `regional/` | Regional vector example |
 | `sample_project/` | Template for standalone Low\* projects |
-| `old/tls-record-layer/` | Legacy TLS record layer with crypto |
 
 ## Prerequisites
 
@@ -103,10 +101,10 @@ The following modules were moved from the F\* repository's `ulib/` directory:
 # Initialize the FStar submodule
 git submodule update --init --recursive
 
-# Build F* first (see FStar/INSTALL.md)
-cd FStar && make -j && cd ..
+# Build F* (automatic if not already built)
+# Or manually: cd FStar && make -j && cd ..
 
-# Verify LowStar libraries
+# Verify LowStar libraries (builds F* first if needed)
 make lib
 
 # Verify all examples
