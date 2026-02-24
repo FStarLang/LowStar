@@ -31,20 +31,64 @@ FSTAR_LIB_MODULES = $(filter FStar.%,$(LIB_MODULE_NAMES))
 ALREADY_CACHED_EXCLUSIONS = $(addprefix -,$(FSTAR_LIB_MODULES)) -LowStar
 ALREADY_CACHED = Prims FStar $(ALREADY_CACHED_EXCLUSIONS)
 
-# Example directories — only self-contained examples that don't need
-# external dependencies (Platform.Bytes, CoreCrypto, KaRaMeL, etc.)
+# -------------------------------------------------------------------------
+# Source files
+# -------------------------------------------------------------------------
+
+# Example directories (self-contained, no module name collisions)
 EXAMPLE_DIRS = \
   examples/data_structures \
   examples/demos/low-star \
   examples/doublylinkedlist \
   examples/generic \
+  examples/interactive \
+  examples/layeredeffects \
+  examples/low-mitls-experiments \
+  examples/miniparse \
   examples/misc \
   examples/oplss2021 \
   examples/preorders \
+  examples/regional \
   examples/sample_project \
+  examples/tactics/old \
   examples/tests
 
-EXAMPLE_FILES = $(foreach d,$(EXAMPLE_DIRS),$(wildcard $(d)/*.fst $(d)/*.fsti))
+# Test directories (no module name collisions within this set)
+TEST_DIRS = \
+  tests/bug-reports/closed \
+  tests/extraction \
+  tests/micro-benchmarks \
+  tests/tactics
+
+# Note: directories excluded from the unified build due to module name
+# collisions or external dependencies:
+#   tests/struct/*.pos/  - each has Test.fst (8-way collision)
+#   tests/error-messages/ - Inference.fst collides with micro-benchmarks
+#   tests/prettyprinting/ - Misc.fst uses unresolved U32 abbreviation
+#   doc/old/tutorial/     - exercises/solutions share module names
+#   examples/crypto/      - needs CoreCrypto, Platform.Bytes
+#   examples/kv_parsing/  - needs C.Loops
+#   examples/old/         - needs external TLS/crypto deps
+
+ALL_DIRS = $(EXAMPLE_DIRS) $(TEST_DIRS)
+
+EXAMPLE_FILES = $(foreach d,$(ALL_DIRS),$(wildcard $(d)/*.fst $(d)/*.fsti))
+
+# Filter out files requiring C.Loops (from KaRaMeL, not in F*)
+EXCLUDED_FILES = \
+  examples/miniparse/MiniParse.Impl.List.fst \
+  examples/miniparse/MiniParse.Tac.Impl.fst \
+  examples/miniparse/MiniParseExample.fst \
+  examples/miniparse/MiniParseExample.fsti \
+  examples/miniparse/MiniParseExample3.fst \
+  examples/miniparse/MiniParseExample3.fsti \
+  examples/tactics/old/StringPrinter.Base.fst \
+  examples/tactics/old/StringPrinter.Rec.fst \
+  examples/tactics/old/StringPrinter.RecC.fst \
+  examples/tactics/old/StringPrinterTest.fst \
+  examples/tactics/old/StringPrinterTest.Aux.fst
+
+EXAMPLE_FILES := $(filter-out $(EXCLUDED_FILES),$(EXAMPLE_FILES))
 
 # All source files for dependency analysis
 ALL_SOURCE_FILES = $(wildcard lib/*.fst lib/*.fsti \
@@ -60,7 +104,7 @@ FSTAR_FLAGS = \
   --include $(LOWSTAR_LIB) \
   --include $(LOWSTAR_LEGACY) \
   --include $(LOWSTAR_EXPERIMENTAL) \
-  $(foreach d,$(EXAMPLE_DIRS),--include $(d)) \
+  $(foreach d,$(ALL_DIRS),--include $(d)) \
   --warn_error -321
 
 CACHE_DIR  = _cache
