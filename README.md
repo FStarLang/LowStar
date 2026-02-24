@@ -10,7 +10,7 @@ manipulation of heap-allocated arrays.
 
 ```
 LowStar/
-├── FStar/                  # Git submodule: FStarLang/FStar (master branch)
+├── FStar/                  # Git submodule: FStarLang/FStar (fstar2 branch)
 ├── lib/                    # Low* library modules
 │   ├── LowStar.*.fst/i    # Core LowStar buffer, modifies, endianness, etc.
 │   ├── FStar.HyperStack.*  # HyperStack memory model and ST effect
@@ -20,6 +20,8 @@ LowStar/
 │   │   ├── FStar.Buffer.*  # Old-style buffer library
 │   │   ├── FStar.Pointer.* # Pointer library
 │   │   └── LowStar.*      # Buffer compatibility shims
+│   ├── experimental/       # Experimental modules
+│   │   └── FStar.InteractiveHelpers.*
 │   └── ml/                 # OCaml extraction support
 │       ├── FStar_Buffer.ml
 │       └── FStar_HyperStack_ST.ml
@@ -37,6 +39,8 @@ LowStar/
 │   ├── regional/           # Regional vector example
 │   ├── sample_project/     # Sample standalone Low* project
 │   └── tests/              # Low*-specific tests (BufferView, HyperStack)
+├── doc/                    # Tutorial exercises and solutions
+├── tests/                  # Struct tests, bug reports, micro-benchmarks
 ├── Makefile                # Top-level build system
 ├── README.md               # This file
 └── LICENSE
@@ -99,14 +103,16 @@ git submodule update --init --recursive
 # Build F* (automatic if not already built)
 # Or manually: cd FStar && make -j && cd ..
 
-# Verify LowStar libraries (builds F* first if needed)
-make lib
+# Or point to an existing F* build:
+# export FSTAR_HOME=/path/to/FStar
 
-# Verify all examples
-make examples
-
-# Or verify everything
+# Verify LowStar libraries and examples
 make all
+
+# Or individually:
+make lib       # verify lib/ only
+make examples  # verify examples/ only
+make clean     # remove build artifacts
 ```
 
 ## Dependency Scanning

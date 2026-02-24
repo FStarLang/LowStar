@@ -13,18 +13,44 @@ FSTAR_EXE  ?= $(FSTAR_HOME)/out/bin/fstar.exe
 # F* standard library (core modules that ship with F*)
 FSTAR_ULIB = $(FSTAR_HOME)/ulib
 
-# LowStar library directory
-LOWSTAR_LIB = $(realpath lib)
-LOWSTAR_LEGACY = $(realpath lib/legacy)
+# LowStar library directories
+LOWSTAR_LIB          = $(realpath lib)
+LOWSTAR_LEGACY       = $(realpath lib/legacy)
+LOWSTAR_EXPERIMENTAL = $(realpath lib/experimental)
 
-# --already_cached: treat Prims and FStar modules as cached from the
-# FStar submodule's ulib.checked, but NOT LowStar modules — those are
-# verified from our lib/ sources.
-# NOTE: The FStar.HyperStack/Modifies/etc. modules in lib/ are currently
-# also present in the FStar submodule (master branch) and use its cache.
-# Once the fstar2 cleanup merges to master, update --already_cached to
-# also exclude those FStar.* modules with e.g. -FStar.HyperStack.
-ALREADY_CACHED = Prims FStar -LowStar
+# --already_cached: treat Prims and core FStar modules as cached from the
+# F* distribution, but NOT the FStar.* and LowStar.* modules we provide
+# in lib/ (since those were removed from fstar2's ulib).
+#
+# Compute module names from lib/ files to auto-generate exclusions:
+LIB_ALL_FILES = $(wildcard lib/*.fst lib/*.fsti \
+                           lib/legacy/*.fst lib/legacy/*.fsti \
+                           lib/experimental/*.fst lib/experimental/*.fsti)
+LIB_MODULE_NAMES = $(sort $(basename $(notdir $(LIB_ALL_FILES))))
+FSTAR_LIB_MODULES = $(filter FStar.%,$(LIB_MODULE_NAMES))
+ALREADY_CACHED_EXCLUSIONS = $(addprefix -,$(FSTAR_LIB_MODULES)) -LowStar
+ALREADY_CACHED = Prims FStar $(ALREADY_CACHED_EXCLUSIONS)
+
+# Example directories — only self-contained examples that don't need
+# external dependencies (Platform.Bytes, CoreCrypto, KaRaMeL, etc.)
+EXAMPLE_DIRS = \
+  examples/data_structures \
+  examples/demos/low-star \
+  examples/doublylinkedlist \
+  examples/generic \
+  examples/misc \
+  examples/oplss2021 \
+  examples/preorders \
+  examples/sample_project \
+  examples/tests
+
+EXAMPLE_FILES = $(foreach d,$(EXAMPLE_DIRS),$(wildcard $(d)/*.fst $(d)/*.fsti))
+
+# All source files for dependency analysis
+ALL_SOURCE_FILES = $(wildcard lib/*.fst lib/*.fsti \
+                              lib/legacy/*.fst lib/legacy/*.fsti \
+                              lib/experimental/*.fst lib/experimental/*.fsti) \
+                   $(EXAMPLE_FILES)
 
 # Common F* flags
 FSTAR_FLAGS = \
@@ -33,6 +59,7 @@ FSTAR_FLAGS = \
   --already_cached '$(ALREADY_CACHED)' \
   --include $(LOWSTAR_LIB) \
   --include $(LOWSTAR_LEGACY) \
+  --include $(LOWSTAR_EXPERIMENTAL) \
   $(foreach d,$(EXAMPLE_DIRS),--include $(d)) \
   --warn_error -321
 
@@ -53,7 +80,7 @@ fstar: $(FSTAR_EXE)
 
 $(FSTAR_EXE):
 	@if [ ! -f $(FSTAR_EXE) ]; then \
-	  echo "*** F* not found at $(FSTAR_EXE), building it..." ; \
+	  echo '*** F* not found at $(FSTAR_EXE), building it...' ; \
 	  git submodule update --init --recursive ; \
 	  $(MAKE) -C $(FSTAR_HOME) -j ; \
 	fi
@@ -62,29 +89,9 @@ $(FSTAR_EXE):
 # Dependency analysis
 # -------------------------------------------------------------------------
 
-# Collect all .fst/.fsti files in lib/
-LIB_FILES = $(wildcard lib/*.fst lib/*.fsti lib/legacy/*.fst lib/legacy/*.fsti)
-
-# Collect all example .fst/.fsti files
-EXAMPLE_DIRS = \
-  examples/data_structures \
-  examples/demos/low-star \
-  examples/doublylinkedlist \
-  examples/generic \
-  examples/misc \
-  examples/oplss2021 \
-  examples/preorders \
-  examples/sample_project \
-  examples/tests
-
-EXAMPLE_FILES = $(foreach d,$(EXAMPLE_DIRS),$(wildcard $(d)/*.fst $(d)/*.fsti))
-
-ALL_FILES = $(LIB_FILES) $(EXAMPLE_FILES)
-
-# Generate .depend using F*'s --dep full
-.depend: $(FSTAR_EXE) $(ALL_FILES)
+.depend: $(FSTAR_EXE) $(ALL_SOURCE_FILES)
 	@mkdir -p $(CACHE_DIR) $(OUTPUT_DIR)
-	$(FSTAR) --dep full $(ALL_FILES) \
+	$(FSTAR) --dep full $(ALL_SOURCE_FILES) \
 	  --output_deps_to $@
 
 depend: .depend
